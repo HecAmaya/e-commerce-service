@@ -9,6 +9,16 @@ Aplicación local de catálogo y compras simuladas. Permite administrar producto
 - React 19, TypeScript, Vite y Nginx
 - Docker Compose
 
+## Enfoque y decisiones
+
+- PostgreSQL se utiliza como base local porque las órdenes y el inventario requieren transacciones y relaciones.
+- Spring Data JPA centraliza la persistencia; `BigDecimal` evita errores de precisión en precios y pesos.
+- La compra es simulada y usa una transacción con bloqueo pesimista para evitar sobreventa.
+- La categoría se almacena como texto para permitir nuevas categorías sin modificar el esquema.
+- El CSV se procesa con Apache Commons CSV para soportar correctamente campos entrecomillados y comas.
+- Se rechazó una base documental porque el inventario y las órdenes requieren consistencia transaccional.
+- Se descartó un proveedor de pagos porque el requisito permite una compra simulada.
+
 ## Ejecutar con Docker
 
 Requisitos: Docker Desktop.
