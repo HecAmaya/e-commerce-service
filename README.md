@@ -1,54 +1,131 @@
-# Commerce Console
+# E-commerce Service
 
-Enterprise-style product catalog and fake-purchase application built with Java 21, Spring Boot, PostgreSQL, and React/TypeScript (Vite).
+Aplicación local de catálogo y compras simuladas. Permite administrar productos, importarlos desde CSV, buscarlos y crear órdenes con descuento transaccional de inventario.
 
-## Decisions and approach
+## Tecnologías
 
-- Spring Data JPA provides durable product and order persistence; PostgreSQL is the local production-like database.
-- Prices and weights use `BigDecimal`, and SKU uniqueness is enforced both in the service and database.
-- Purchase uses a pessimistic row lock inside a transaction so concurrent requests cannot oversell stock. Orders store a snapshot of item name, SKU, price, and quantity.
-- CSV imports are deliberately strict: values are trimmed, validated, and rejected with row number and reason. Currency strings such as `$29.99` and non-numeric values such as `free` are reported rather than silently normalized.
-- Every CSV field in the proposed structure is required, including `sku`; invalid rows are rejected without being persisted.
-- The frontend is a small responsive operations console. Nginx serves the compiled Vite app and proxies `/api` to the backend in Compose.
+- Java 21, Spring Boot 3.5, Spring Data JPA
+- PostgreSQL 17
+- React 19, TypeScript, Vite y Nginx
+- Docker Compose
 
-Alternatives considered: a document database was rejected because inventory decrement and relational order history benefit from transactions; a hosted payment provider was out of scope for the requested fake flow; a CSV library was chosen over hand-written parsing to support quoted commas safely.
+## Ejecutar con Docker
 
-## Local run
+Requisitos: Docker Desktop.
 
-Requirements: JDK 21, Maven 3.9+, Node 20+, npm, and Docker Desktop.
-
-Start the complete stack:
-
-```text
+```bash
 docker compose up --build
 ```
 
-Open `http://localhost:3000`. The API is at `http://localhost:8080`; PostgreSQL is available inside Compose at port 5432. Stop with `docker compose down` (add `-v` to remove database data).
+URLs:
 
-For development, start PostgreSQL with `docker compose up postgres`, then run `mvn spring-boot:run` from the root and `npm install && npm run dev` from `frontend`. The Vite development UI is at `http://localhost:5173`.
+- Aplicación: http://localhost:3000
+- API: http://localhost:8080
 
-The sample file is included at `data/sample/NTD-Code-Challenge-E-Commerce.csv` and was downloaded/added on **2026-09-02**.
+Detener:
 
-The repository currently contains the complete working tree but is not connected to a GitHub remote in this environment. Publish it to the target GitHub repository before submitting the challenge.
+```bash
+docker compose down
+```
+
+Para borrar también los datos locales:
+
+```bash
+docker compose down -v
+```
+
+## Ejecutar en desarrollo
+
+Requisitos: JDK 21, Maven 3.9+, Node.js 20+ y npm.
+
+1. Iniciar PostgreSQL:
+
+```bash
+docker compose up postgres
+```
+
+2. Iniciar el backend desde la raíz:
+
+```bash
+mvn spring-boot:run
+```
+
+3. Iniciar el frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend de desarrollo: http://localhost:5173
 
 ## API
 
-`GET /api/products?q=shoe` searches name, SKU, description, and category. `GET /api/products/{id}` retrieves one product.
+### Listar y buscar productos
 
-`POST /api/products` and `PUT /api/products/{id}` accept JSON with `name`, `sku`, `description`, `category`, `price`, `stock`, and `weightKg`. `DELETE /api/products/{id}` removes a product.
+```bash
+curl "http://localhost:8080/api/products"
+curl "http://localhost:8080/api/products?q=shoe"
+curl "http://localhost:8080/api/products/1"
+```
 
-`POST /api/products/import` accepts a multipart `file` containing headers `name,sku,description,category,price,stock,weight_kg`. It returns `{ imported, rejected, errors: [{ row, sku, reason }] }`; valid rows are committed while malformed rows are reported.
+La búsqueda revisa nombre, SKU, descripción y categoría.
 
-`POST /api/orders` accepts `{ "productId": 1, "quantity": 2 }`, decrements stock atomically, and returns an order confirmation with total and item snapshot. Insufficient stock returns HTTP 409.
+### Crear producto
 
-## Verification
+```bash
+curl -X POST http://localhost:8080/api/products ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\":\"Running Shoes\",\"sku\":\"RS-001\",\"description\":\"Daily training shoes\",\"category\":\"Footwear\",\"price\":89.99,\"stock\":150,\"weightKg\":0.35}"
+```
 
-Backend tests cover strict CSV reporting, stock decrement, and insufficient-stock protection:
+### Actualizar y eliminar producto
+
+```bash
+curl -X PUT http://localhost:8080/api/products/1 ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\":\"Updated Shoes\",\"sku\":\"RS-001\",\"description\":\"Updated description\",\"category\":\"Footwear\",\"price\":94.99,\"stock\":100,\"weightKg\":0.35}"
+
+curl -X DELETE http://localhost:8080/api/products/1
+```
+
+### Importar CSV
+
+Encabezados requeridos:
 
 ```text
+name,sku,description,category,price,stock,weight_kg
+```
+
+```bash
+curl -X POST http://localhost:8080/api/products/import ^
+  -F "file=@data/sample/NTD-Code-Challenge-E-Commerce.csv"
+```
+
+Las filas válidas se importan y las inválidas se reportan con número de fila y motivo. El archivo de ejemplo fue descargado el **2026-09-02**.
+
+### Comprar producto
+
+```bash
+curl -X POST http://localhost:8080/api/orders ^
+  -H "Content-Type: application/json" ^
+  -d "{\"productId\":1,\"quantity\":2}"
+```
+
+La compra usa una transacción y bloqueo pesimista para evitar vender más unidades que las disponibles. La respuesta incluye el total y el detalle de la orden. La falta de inventario devuelve `409 Conflict`.
+
+## Pruebas
+
+Backend:
+
+```bash
 mvn test
 ```
 
-Build the frontend with `npm run build` from `frontend`.
+Frontend:
 
-The backend test suite and Docker Compose configuration were validated locally. The frontend build requires Node.js/npm to be installed; npm was not available in the review environment, so that command must still be run in a Node-enabled environment before submission.
+```bash
+cd frontend
+npm run build
+```
