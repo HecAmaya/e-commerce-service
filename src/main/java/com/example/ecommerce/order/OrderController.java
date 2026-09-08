@@ -11,15 +11,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    private final com.example.ecommerce.product.ProductService products;
+    private final OrderService orders;
 
-    public OrderController(com.example.ecommerce.product.ProductService products) {
-        this.products = products;
+    public OrderController(OrderService orders) {
+        this.orders = orders;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Order purchase(@Valid @RequestBody OrderRequest request) {
-        return products.purchase(request);
+        return orders.purchase(request);
     }
 }

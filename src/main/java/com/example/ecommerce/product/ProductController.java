@@ -20,9 +20,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductService service;
+    private final ProductImportService importService;
 
-    public ProductController(ProductService service) {
+    public ProductController(ProductService service, ProductImportService importService) {
         this.service = service;
+        this.importService = importService;
     }
 
     @GetMapping
@@ -54,6 +56,6 @@ public class ProductController {
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importCsv(@RequestParam("file") MultipartFile file) {
-        return service.importCsv(file);
+        return importService.importCsv(file);
     }
 }
