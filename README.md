@@ -7,6 +7,8 @@ Aplicación local de catálogo y compras simuladas. Permite administrar producto
 - Java 21, Spring Boot 3.5, Spring Data JPA
 - PostgreSQL 17
 - React 19, TypeScript, Vite y Nginx
+- Apache Commons CSV 1.14
+- JUnit 5, Mockito y JaCoCo 0.8.13
 - Docker Compose
 
 ## Enfoque y decisiones
@@ -132,6 +134,14 @@ Backend:
 ```bash
 mvn test
 ```
+
+La cobertura del backend se mide con JaCoCo. El build exige como mínimo **80% de cobertura de líneas y ramas**; `mvn verify` falla si no se alcanza ese umbral:
+
+```bash
+mvn verify
+```
+
+Después de ejecutar las pruebas, el reporte HTML se genera en `target/site/jacoco/index.html`.
 
 Frontend:
 
