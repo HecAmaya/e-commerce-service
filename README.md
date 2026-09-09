@@ -33,6 +33,8 @@ URLs:
 
 - Aplicación: http://localhost:3000
 - API: http://localhost:8080
+- Health: http://localhost:8080/actuator/health
+- Readiness: http://localhost:8080/actuator/health/readiness
 
 Detener:
 
@@ -140,6 +142,18 @@ Backend:
 ```bash
 mvn test
 ```
+
+Las pruebas de integración (`EcommerceIntegrationTest`) cargan el contexto completo con H2 en memoria y cubren persistencia, restricciones de SKU, eliminación lógica y compras concurrentes. En un entorno con Docker disponible pueden sustituirse por Testcontainers para validar PostgreSQL.
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm test
+```
+
+Las pruebas del frontend usan Vitest, jsdom y React Testing Library para verificar la carga de respuestas paginadas y el envío del formulario de creación.
 
 La cobertura del backend se mide con JaCoCo. El build exige como mínimo **80% de cobertura de líneas y ramas**; `mvn verify` falla si no se alcanza ese umbral:
 

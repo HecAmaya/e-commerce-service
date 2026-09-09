@@ -3,6 +3,7 @@ package com.example.ecommerce.product;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
@@ -17,6 +18,7 @@ import com.example.ecommerce.order.PaymentService;
 import com.example.ecommerce.order.PaymentResult;
 import com.example.ecommerce.order.SimulatedPaymentService;
 import com.example.ecommerce.order.OrderStatus;
+import com.example.ecommerce.order.FailedOrderService;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,12 +45,13 @@ class ProductServiceTest {
     private ProductImportService importService;
     private OrderService orderService;
     @Mock PaymentService payments;
+    @Mock FailedOrderService failedOrders;
     @BeforeEach
     void setUp() {
         productService = new ProductService(products);
         csvParser = new ProductCsvParser();
         importService = new ProductImportService(products, csvParser);
-        orderService = new OrderService(products, orders, payments);
+        orderService = new OrderService(products, orders, payments, failedOrders);
     }
 
     @Test
@@ -141,14 +145,15 @@ class ProductServiceTest {
     void productServiceSupportsSearchAndCrud() {
         Product existing = new Product(" Old ", "OLD", "Description", "Category",
                 new BigDecimal("2.00"), 3, new BigDecimal("0.5"));
-        when(products.search(any(), any(), any(), any(), any())).thenReturn(new PageImpl<>(List.of(existing)));
+        when(products.findAll(org.mockito.ArgumentMatchers.<Specification<Product>>any(),
+                any(org.springframework.data.domain.Pageable.class))).thenReturn(new PageImpl<>(List.of(existing)));
         assertEquals(1, productService.find(null, null, null, null, PageRequest.of(0, 20)).getTotalElements());
         assertEquals(1, productService.find(" shoe ", " Category ", null, null,
                 PageRequest.of(0, 20)).getTotalElements());
 
         ProductRequest request = new ProductRequest(" Name ", " SKU ", " Description ",
                 " Category ", new BigDecimal("4.00"), 2, new BigDecimal("0.2"));
-        when(products.existsBySkuIgnoreCase("SKU")).thenReturn(false);
+        when(products.existsBySkuIncludingInactive("SKU")).thenReturn(false);
         when(products.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
         Product created = productService.create(request);
         assertEquals("Name", created.getName());
@@ -165,11 +170,12 @@ class ProductServiceTest {
 
     @Test
     void productServiceCapsPageSizeAndRejectsInvalidSearchRangeAndSort() {
-        when(products.search(any(), any(), any(), any(), any())).thenReturn(new PageImpl<>(List.of()));
+        when(products.findAll(org.mockito.ArgumentMatchers.<Specification<Product>>any(),
+                any(org.springframework.data.domain.Pageable.class))).thenReturn(new PageImpl<>(List.of()));
 
         productService.find(null, null, null, null, PageRequest.of(0, 500));
-        verify(products).search(null, null, null, null, PageRequest.of(0, 100,
-                org.springframework.data.domain.Sort.by("name", "id")));
+        verify(products).findAll(org.mockito.ArgumentMatchers.<Specification<Product>>any(), eq(PageRequest.of(0, 100,
+                org.springframework.data.domain.Sort.by("name", "id"))));
 
         assertThrows(IllegalArgumentException.class,
                 () -> productService.find(null, null, new BigDecimal("10"), new BigDecimal("1"),
@@ -194,7 +200,7 @@ class ProductServiceTest {
 
         ProductRequest request = new ProductRequest("Name", "SKU", "Description",
                 "Category", BigDecimal.ONE, 1, BigDecimal.ONE);
-        when(products.existsBySkuIgnoreCase("SKU")).thenReturn(true);
+        when(products.existsBySkuIncludingInactive("SKU")).thenReturn(true);
         assertThrows(ConflictException.class, () -> productService.create(request));
 
         assertThrows(NotFoundException.class, () -> productService.delete(99L));
@@ -242,13 +248,13 @@ class ProductServiceTest {
         Product product = new Product("Item", "I-1", "Description", "Test", new BigDecimal("9.99"), 5, new BigDecimal("1.0"));
         when(products.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
         when(payments.authorize(any())).thenReturn(PaymentResult.DECLINED);
-        when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(failedOrders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         assertThrows(ConflictException.class, () -> orderService.purchase(new OrderRequest(1L, 2)));
 
         org.mockito.ArgumentCaptor<com.example.ecommerce.order.Order> captor =
                 org.mockito.ArgumentCaptor.forClass(com.example.ecommerce.order.Order.class);
-        verify(orders).save(captor.capture());
+        verify(failedOrders).save(captor.capture());
         assertEquals(OrderStatus.FAILED, captor.getValue().getStatus());
         assertEquals(5, product.getStock());
     }

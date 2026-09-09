@@ -13,11 +13,14 @@ public class OrderService {
     private final ProductRepository products;
     private final OrderRepository orders;
     private final PaymentService payments;
+    private final FailedOrderService failedOrders;
 
-    public OrderService(ProductRepository products, OrderRepository orders, PaymentService payments) {
+    public OrderService(ProductRepository products, OrderRepository orders, PaymentService payments,
+            FailedOrderService failedOrders) {
         this.products = products;
         this.orders = orders;
         this.payments = payments;
+        this.failedOrders = failedOrders;
     }
 
     @Transactional
@@ -33,7 +36,7 @@ public class OrderService {
                 request.quantity(), product.getPrice()));
         if (payments.authorize(total) != PaymentResult.APPROVED) {
             order.setStatus(OrderStatus.FAILED);
-            orders.save(order);
+            failedOrders.save(order);
             throw new ConflictException("Payment was declined");
         }
         order.setStatus(OrderStatus.COMPLETED);

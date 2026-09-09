@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -17,6 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProductCsvParser {
     public List<ParseResult> parse(MultipartFile file) {
         List<ParseResult> rows = new ArrayList<>();
+        forEach(file, rows::add);
+        return rows;
+    }
+
+    public void forEach(MultipartFile file, Consumer<ParseResult> consumer) {
         try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
              CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
                      .setIgnoreEmptyLines(true).setTrim(true).get().parse(reader)) {
@@ -24,12 +30,11 @@ public class ProductCsvParser {
                  int rowNumber = (int) row.getRecordNumber() + 1;
                  String sku = value(row, "sku");
                  try {
-                     rows.add(ParseResult.success(rowNumber, parseRow(row)));
+                     consumer.accept(ParseResult.success(rowNumber, parseRow(row)));
                  } catch (RuntimeException ex) {
-                     rows.add(ParseResult.failure(rowNumber, sku, ex));
+                     consumer.accept(ParseResult.failure(rowNumber, sku, ex));
                  }
             }
-            return rows;
         } catch (IOException ex) {
             throw new IllegalArgumentException("Unable to parse CSV: " + ex.getMessage(), ex);
         }

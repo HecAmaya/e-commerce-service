@@ -1,33 +1,23 @@
 package com.example.ecommerce.product;
 
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Set;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import jakarta.persistence.LockModeType;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     boolean existsBySkuIgnoreCase(String sku);
     Optional<Product> findBySkuIgnoreCase(String sku);
 
-    @Query("select lower(p.sku) from Product p where lower(p.sku) in :skus")
+    @Query(value = "select lower(sku) from products where lower(sku) in (:skus)", nativeQuery = true)
     Set<String> findExistingSkus(Collection<String> skus);
 
-    @Query("""
-        select p from Product p
-        where (:query is null
-               or lower(p.name) like lower(concat('%', :query, '%'))
-               or lower(p.sku) like lower(concat('%', :query, '%')))
-          and (:category is null or lower(p.category) = lower(:category))
-          and (:minPrice is null or p.price >= :minPrice)
-          and (:maxPrice is null or p.price <= :maxPrice)
-        """)
-    Page<Product> search(String query, String category, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+    @Query(value = "select count(*) > 0 from products where lower(sku) = lower(:sku)", nativeQuery = true)
+    boolean existsBySkuIncludingInactive(String sku);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id")

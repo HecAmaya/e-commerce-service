@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,31 @@ public class ProductService {
         }
         String normalizedQuery = query == null || query.isBlank() ? null : query.trim();
         String normalizedCategory = category == null || category.isBlank() ? null : category.trim();
-        return products.search(normalizedQuery, normalizedCategory, minPrice, maxPrice, normalizePageable(pageable));
+        return products.findAll(buildSearchSpecification(normalizedQuery, normalizedCategory, minPrice, maxPrice),
+                normalizePageable(pageable));
+    }
+
+    private Specification<Product> buildSearchSpecification(String query, String category, BigDecimal minPrice,
+            BigDecimal maxPrice) {
+        return (root, criteriaQuery, builder) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            if (query != null) {
+                String pattern = "%" + query.toLowerCase() + "%";
+                predicates.add(builder.or(
+                        builder.like(builder.lower(root.get("name")), pattern),
+                        builder.like(builder.lower(root.get("sku")), pattern)));
+            }
+            if (category != null) {
+                predicates.add(builder.equal(builder.lower(root.get("category")), category.toLowerCase()));
+            }
+            if (minPrice != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(builder.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
+            return builder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
     }
 
     private Pageable normalizePageable(Pageable pageable) {
@@ -58,7 +83,7 @@ public class ProductService {
 
     @Transactional
     public Product create(ProductRequest request) {
-        if (products.existsBySkuIgnoreCase(request.sku().trim())) {
+        if (products.existsBySkuIncludingInactive(request.sku().trim())) {
             throw new ConflictException("SKU already exists: " + request.sku());
         }
         return products.save(new Product(request.name().trim(), request.sku().trim(), request.description().trim(),
