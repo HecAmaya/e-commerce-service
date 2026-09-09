@@ -18,6 +18,8 @@ import com.example.ecommerce.product.ProductRequest;
 import com.example.ecommerce.product.ProductService;
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -34,12 +36,14 @@ class WebLayerTest {
                 BigDecimal.ONE, 2, BigDecimal.ONE);
         ProductRequest request = new ProductRequest("Name", "SKU", "Description",
                 "Category", BigDecimal.ONE, 2, BigDecimal.ONE);
-        when(products.find("shoe")).thenReturn(List.of(product));
+        when(products.find(org.mockito.ArgumentMatchers.eq("shoe"), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), any()))
+                .thenReturn(new PageImpl<>(List.of(product)));
         when(products.get(1L)).thenReturn(product);
         when(products.create(request)).thenReturn(product);
         when(products.update(1L, request)).thenReturn(product);
 
-        assertEquals(1, productController.find("shoe").size());
+        assertEquals(1, productController.find("shoe", null, null, null, PageRequest.of(0, 20)).getTotalElements());
         assertEquals(product, productController.get(1L));
         assertEquals(product, productController.create(request));
         assertEquals(product, productController.update(1L, request));

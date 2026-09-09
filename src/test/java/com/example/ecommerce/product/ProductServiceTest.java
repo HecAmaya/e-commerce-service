@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
@@ -112,10 +114,10 @@ class ProductServiceTest {
     void productServiceSupportsSearchAndCrud() {
         Product existing = new Product(" Old ", "OLD", "Description", "Category",
                 new BigDecimal("2.00"), 3, new BigDecimal("0.5"));
-        when(products.findAll()).thenReturn(List.of(existing));
-        when(products.search("shoe")).thenReturn(List.of(existing));
-        assertEquals(1, productService.find(null).size());
-        assertEquals(1, productService.find(" shoe ").size());
+        when(products.search(any(), any(), any(), any(), any())).thenReturn(new PageImpl<>(List.of(existing)));
+        assertEquals(1, productService.find(null, null, null, null, PageRequest.of(0, 20)).getTotalElements());
+        assertEquals(1, productService.find(" shoe ", " Category ", null, null,
+                PageRequest.of(0, 20)).getTotalElements());
 
         ProductRequest request = new ProductRequest(" Name ", " SKU ", " Description ",
                 " Category ", new BigDecimal("4.00"), 2, new BigDecimal("0.2"));
@@ -133,6 +135,22 @@ class ProductServiceTest {
         when(products.existsById(1L)).thenReturn(true);
         productService.delete(1L);
         verify(products).deleteById(1L);
+    }
+
+    @Test
+    void productServiceCapsPageSizeAndRejectsInvalidSearchRangeAndSort() {
+        when(products.search(any(), any(), any(), any(), any())).thenReturn(new PageImpl<>(List.of()));
+
+        productService.find(null, null, null, null, PageRequest.of(0, 500));
+        verify(products).search(null, null, null, null, PageRequest.of(0, 100,
+                org.springframework.data.domain.Sort.by("name", "id")));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> productService.find(null, null, new BigDecimal("10"), new BigDecimal("1"),
+                        PageRequest.of(0, 20)));
+        assertThrows(IllegalArgumentException.class,
+                () -> productService.find(null, null, null, null,
+                        PageRequest.of(0, 20, org.springframework.data.domain.Sort.by("description"))));
     }
 
     @Test

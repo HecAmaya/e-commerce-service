@@ -77,12 +77,14 @@ Frontend de desarrollo: http://localhost:5173
 ### Listar y buscar productos
 
 ```bash
-curl "http://localhost:8080/api/products"
-curl "http://localhost:8080/api/products?q=shoe"
+curl "http://localhost:8080/api/products?page=0&size=20&sort=name,asc"
+curl "http://localhost:8080/api/products?q=shoe&category=Footwear&minPrice=10&maxPrice=100&page=0&size=20&sort=price,asc"
 curl "http://localhost:8080/api/products/1"
 ```
 
-La búsqueda revisa nombre, SKU, descripción y categoría.
+La respuesta incluye los metadatos de paginación (`content`, `totalElements`, `totalPages`, etc.).
+La búsqueda indexada revisa nombre y SKU; también admite filtros exactos de categoría y rango de precio.
+El tamaño de página está limitado a 100. Los campos ordenables son `id`, `name`, `sku`, `category`, `price` y `stock`.
 
 ### Crear producto
 

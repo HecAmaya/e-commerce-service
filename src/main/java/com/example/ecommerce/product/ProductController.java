@@ -1,9 +1,12 @@
 package com.example.ecommerce.product;
 
 import jakarta.validation.Valid;
-import java.util.List;
+import java.math.BigDecimal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,8 +31,12 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> find(@RequestParam(required = false) String q) {
-        return service.find(q);
+    public Page<Product> find(@RequestParam(required = false) String q,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @PageableDefault(size = 20, sort = {"name", "id"}) Pageable pageable) {
+        return service.find(q, category, minPrice, maxPrice, pageable);
     }
 
     @GetMapping("/{id}")

@@ -10,7 +10,12 @@ import jakarta.persistence.Version;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products", indexes = {
+        @jakarta.persistence.Index(name = "idx_products_category", columnList = "category"),
+        @jakarta.persistence.Index(name = "idx_products_price", columnList = "price"),
+        @jakarta.persistence.Index(name = "idx_products_name", columnList = "name"),
+        @jakarta.persistence.Index(name = "idx_products_sku", columnList = "sku")
+})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
