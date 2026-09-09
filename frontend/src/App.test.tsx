@@ -22,6 +22,7 @@ describe('Commerce Console', () => {
     render(<App />)
 
     expect(await screen.findByText('Shoe')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/products?page=0&size=10', expect.anything())
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Boot' } })
     fireEvent.change(screen.getByLabelText('SKU'), { target: { value: 'BOOT-1' } })
     fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'Footwear' } })

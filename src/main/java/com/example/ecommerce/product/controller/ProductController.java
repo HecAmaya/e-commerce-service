@@ -40,7 +40,7 @@ public class ProductController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            @PageableDefault(size = 20, sort = {"name", "id"}) Pageable pageable) {
+            @PageableDefault(size = 10, sort = {"name", "id"}) Pageable pageable) {
         return service.find(q, category, minPrice, maxPrice, pageable);
     }
 

@@ -11,6 +11,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
   const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
   const [totalElements, setTotalElements] = useState(0)
   const [form, setForm] = useState<ProductForm>(empty)
@@ -19,14 +20,14 @@ export default function App() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const load = async (q = query, selectedCategory = category, selectedPage = page) => {
+  const load = async (q = query, selectedCategory = category, selectedPage = page, selectedPageSize = pageSize) => {
     try {
-      const result = await loadProducts(q, selectedCategory, selectedPage)
+      const result = await loadProducts(q, selectedCategory, selectedPage, selectedPageSize)
       setProducts(result.content); setTotalPages(result.totalPages); setTotalElements(result.totalElements); setError('')
     }
     catch (e) { setError((e as Error).message) }
   }
-  useEffect(() => { void load('', '', 0) }, [])
+  useEffect(() => { void load('', '', 0, 10) }, [])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -66,7 +67,7 @@ export default function App() {
       <label className="import">Import CSV<input type="file" accept=".csv,text/csv" onChange={e => void importFile(e.target.files?.[0])} /></label>
     </header>
     {(message || error) && <div className={error ? 'notice error' : 'notice'}>{error || message}<button onClick={() => { setMessage(''); setError('') }}>×</button></div>}
-    <section className="toolbar"><div className="search"><span>⌕</span><input value={query} placeholder="Search products or SKU..." onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && void load(query, category, 0)} /><input value={category} placeholder="Category" onChange={e => setCategory(e.target.value)} onKeyDown={e => e.key === 'Enter' && void load(query, category, 0)} /><button onClick={() => { setPage(0); void load(query, category, 0) }}>Search</button></div><span className="count">{totalElements} products</span></section>
+    <section className="toolbar"><div className="search"><span>⌕</span><input value={query} placeholder="Search products or SKU..." onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && void load(query, category, 0)} /><input value={category} placeholder="Category" onChange={e => setCategory(e.target.value)} onKeyDown={e => e.key === 'Enter' && void load(query, category, 0)} /><button onClick={() => { setPage(0); void load(query, category, 0) }}>Search</button></div><div className="toolbar-meta"><label className="page-size">Products per page<select aria-label="Products per page" value={pageSize} onChange={e => { const nextSize = Number(e.target.value); setPageSize(nextSize); setPage(0); void load(query, category, 0, nextSize) }}><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select></label><span className="count">{totalElements} products</span></div></section>
     <section className="layout"><ProductCatalog products={products} onEdit={edit} onDelete={remove} onPurchase={id => setPurchase({ id, quantity: 1 })} /><ProductFormView editing={editing} form={form} onChange={update} onSubmit={submit} onCancel={() => { setEditing(null); setForm(empty) }} /></section>
     <nav aria-label="Catalog pages"><button disabled={page === 0} onClick={() => { const next = page - 1; setPage(next); void load(query, category, next) }}>Previous</button><span>Page {page + 1} of {totalPages}</span><button disabled={page + 1 >= totalPages} onClick={() => { const next = page + 1; setPage(next); void load(query, category, next) }}>Next</button></nav>
     {purchase && <PurchaseModal quantity={purchase.quantity} onQuantityChange={quantity => setPurchase({ ...purchase, quantity })} onConfirm={() => void buy()} onCancel={() => setPurchase(null)} />}

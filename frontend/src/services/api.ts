@@ -26,7 +26,7 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
   return response.status === 204 ? undefined as T : response.json()
 }
 
-export async function loadProducts(query = '', category = '', page = 0, size = 20): Promise<ProductPage> {
+export async function loadProducts(query = '', category = '', page = 0, size = 10): Promise<ProductPage> {
   const params = new URLSearchParams({ page: String(page), size: String(size) })
   if (query) params.set('q', query)
   if (category) params.set('category', category)
