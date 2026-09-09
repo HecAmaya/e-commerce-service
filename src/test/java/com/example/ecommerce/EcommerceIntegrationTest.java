@@ -95,6 +95,18 @@ class EcommerceIntegrationTest {
     }
 
     @Test
+    void scriptingTagsAreRejectedByProductApi() throws Exception {
+        mvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"<script>alert(1)</script>","sku":"SAFE-1",
+                                "description":"Product","category":"Test","price":2.00,"stock":1,"weightKg":1.0}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("HTML")));
+    }
+
+    @Test
     void databaseEnforcesUniqueSkuConstraint() {
         String sku = "DB-DUP-" + System.nanoTime();
         products.saveAndFlush(new Product("First", sku, "Product", "Test",

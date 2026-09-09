@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { deleteProduct, importProducts, loadProducts, purchaseProduct, saveProduct, type Product, type ProductForm } from './api'
+import { deleteProduct, importProducts, loadProducts, purchaseProduct, saveProduct, type Product, type ProductForm } from './services/api'
 import ProductCatalog from './components/ProductCatalog'
 import ProductFormView from './components/ProductForm'
 import PurchaseModal from './components/PurchaseModal'

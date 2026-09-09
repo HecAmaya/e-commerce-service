@@ -13,9 +13,11 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.ecommerce.common.NoHtmlValidator;
 
 @Component
 public class ProductCsvParser {
+    private static final NoHtmlValidator NO_HTML = new NoHtmlValidator();
     public List<ParseResult> parse(MultipartFile file) {
         List<ParseResult> rows = new ArrayList<>();
         forEach(file, rows::add);
@@ -55,6 +57,10 @@ public class ProductCsvParser {
         String value = value(row, column);
         if (value.isBlank()) {
             throw new IllegalArgumentException(column + " is required");
+        }
+        if (("name".equals(column) || "sku".equals(column) || "description".equals(column)
+                || "category".equals(column)) && !NO_HTML.isValid(value, null)) {
+            throw new IllegalArgumentException(column + " must not contain HTML or scripting tags");
         }
         return value;
     }

@@ -1,4 +1,4 @@
-import type { Product } from '../api'
+import type { Product } from '../services/api'
 import ProductCard from './ProductCard'
 
 type Props = {

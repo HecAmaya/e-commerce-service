@@ -74,6 +74,15 @@ npm run dev
 
 Frontend de desarrollo: http://localhost:5173
 
+## Estructura del proyecto
+
+- `src/main/java/com/example/ecommerce/product`: catálogo, búsqueda, importación CSV y validaciones de productos.
+- `src/main/java/com/example/ecommerce/order`: órdenes, inventario y servicio de pago simulado.
+- `src/main/java/com/example/ecommerce/common`: excepciones y validaciones reutilizables.
+- `src/main/resources/db/migration`: migraciones versionadas de Flyway.
+- `frontend/src/components`: componentes visuales de React.
+- `frontend/src/services`: acceso HTTP y contratos de la API del frontend.
+
 ## API
 
 ### Listar y buscar productos

@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import type { Product, ProductForm as ProductFormData } from '../api'
+import type { Product, ProductForm as ProductFormData } from '../services/api'
 
 type Props = {
   editing: Product | null

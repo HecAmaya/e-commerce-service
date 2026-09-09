@@ -135,6 +135,23 @@ class ProductServiceTest {
     }
 
     @Test
+    void parserRejectsHtmlAndScriptingInTextFields() {
+        String csv = """
+                name,sku,description,category,price,stock,weight_kg
+                <script>alert('xss')</script>,X-1,Description,Test,1,1,0.1
+                Safe,X-2,<img src=x onerror=alert(1)>,Test,1,1,0.1
+                Safe,X-3,Description,<b>Test</b>,1,1,0.1
+                """;
+
+        List<ProductCsvParser.ParseResult> results = csvParser.parse(
+                new MockMultipartFile("file", "items.csv", "text/csv", csv.getBytes()));
+
+        assertEquals("name must not contain HTML or scripting tags", results.get(0).error().getMessage());
+        assertEquals("description must not contain HTML or scripting tags", results.get(1).error().getMessage());
+        assertEquals("category must not contain HTML or scripting tags", results.get(2).error().getMessage());
+    }
+
+    @Test
     void parserWrapsInputErrors() throws IOException {
         doThrow(new IOException("read failed")).when(file).getInputStream();
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> csvParser.parse(file));
