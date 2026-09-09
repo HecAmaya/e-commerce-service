@@ -1,7 +1,10 @@
 package com.example.ecommerce.order;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,6 +24,9 @@ public class Order {
     private Long id;
     private Instant createdAt;
     private BigDecimal total;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OrderStatus status;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
@@ -31,6 +37,7 @@ public class Order {
     public Order(BigDecimal total) {
         this.createdAt = Instant.now();
         this.total = total;
+        this.status = OrderStatus.PENDING;
     }
 
     public void addItem(OrderItem item) {
@@ -41,5 +48,7 @@ public class Order {
     public Long getId() { return id; }
     public Instant getCreatedAt() { return createdAt; }
     public BigDecimal getTotal() { return total; }
+    public OrderStatus getStatus() { return status; }
+    public void setStatus(OrderStatus status) { this.status = status; }
     public List<OrderItem> getItems() { return items; }
 }

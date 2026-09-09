@@ -5,11 +5,13 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:ecommerce}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
+  flyway:
+    baseline-on-migrate: true
   servlet:
     multipart:
       max-file-size: 10MB

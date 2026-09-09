@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 
 @Entity
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
         @jakarta.persistence.Index(name = "idx_products_name", columnList = "name"),
         @jakarta.persistence.Index(name = "idx_products_sku", columnList = "sku")
 })
+@SQLRestriction("active = true")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,6 +47,9 @@ public class Product {
     @Version
     private Long version;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     protected Product() {
     }
 
@@ -66,6 +71,7 @@ public class Product {
     public BigDecimal getPrice() { return price; }
     public Integer getStock() { return stock; }
     public BigDecimal getWeightKg() { return weightKg; }
+    public boolean isActive() { return active; }
     public void setName(String name) { this.name = name; }
     public void setSku(String sku) { this.sku = sku; }
     public void setDescription(String description) { this.description = description; }
@@ -73,4 +79,5 @@ public class Product {
     public void setPrice(BigDecimal price) { this.price = price; }
     public void setStock(Integer stock) { this.stock = stock; }
     public void setWeightKg(BigDecimal weightKg) { this.weightKg = weightKg; }
+    public void setActive(boolean active) { this.active = active; }
 }

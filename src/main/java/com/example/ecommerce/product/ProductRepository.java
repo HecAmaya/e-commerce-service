@@ -1,6 +1,8 @@
 package com.example.ecommerce.product;
 
 import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Set;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -12,6 +14,9 @@ import jakarta.persistence.LockModeType;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsBySkuIgnoreCase(String sku);
     Optional<Product> findBySkuIgnoreCase(String sku);
+
+    @Query("select lower(p.sku) from Product p where lower(p.sku) in :skus")
+    Set<String> findExistingSkus(Collection<String> skus);
 
     @Query("""
         select p from Product p

@@ -82,9 +82,8 @@ public class ProductService {
 
     @Transactional
     public void delete(Long id) {
-        if (!products.existsById(id)) {
-            throw new NotFoundException("Product " + id + " was not found");
-        }
-        products.deleteById(id);
+        Product product = get(id);
+        product.setActive(false);
+        products.save(product);
     }
 }

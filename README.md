@@ -104,6 +104,8 @@ curl -X PUT http://localhost:8080/api/products/1 ^
 curl -X DELETE http://localhost:8080/api/products/1
 ```
 
+La eliminación de productos es lógica: el producto queda inactivo para proteger el historial de órdenes y deja de aparecer en el catálogo.
+
 ### Importar CSV
 
 Encabezados requeridos:
@@ -127,7 +129,9 @@ curl -X POST http://localhost:8080/api/orders ^
   -d "{\"productId\":1,\"quantity\":2}"
 ```
 
-La compra usa una transacción y bloqueo pesimista para evitar vender más unidades que las disponibles. La respuesta incluye el total y el detalle de la orden. La falta de inventario devuelve `409 Conflict`.
+La compra usa una transacción y bloqueo pesimista para evitar vender más unidades que las disponibles. La respuesta incluye el total, el estado (`PENDING`, `COMPLETED` o `FAILED`) y el detalle de la orden. El pago está aislado detrás de un servicio simulado. La falta de inventario o un pago rechazado devuelve `409 Conflict`.
+
+El esquema se gestiona con migraciones Flyway en `src/main/resources/db/migration`; Hibernate valida el esquema en lugar de modificarlo automáticamente.
 
 ## Pruebas
 

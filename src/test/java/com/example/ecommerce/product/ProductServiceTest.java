@@ -4,18 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 import com.example.ecommerce.common.ConflictException;
 import com.example.ecommerce.common.NotFoundException;
 import com.example.ecommerce.order.OrderRepository;
 import com.example.ecommerce.order.OrderRequest;
 import com.example.ecommerce.order.OrderService;
+import com.example.ecommerce.order.PaymentService;
+import com.example.ecommerce.order.PaymentResult;
+import com.example.ecommerce.order.SimulatedPaymentService;
+import com.example.ecommerce.order.OrderStatus;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,12 +41,13 @@ class ProductServiceTest {
     private ProductCsvParser csvParser;
     private ProductImportService importService;
     private OrderService orderService;
+    @Mock PaymentService payments;
     @BeforeEach
     void setUp() {
         productService = new ProductService(products);
         csvParser = new ProductCsvParser();
         importService = new ProductImportService(products, csvParser);
-        orderService = new OrderService(products, orders);
+        orderService = new OrderService(products, orders, payments);
     }
 
     @Test
@@ -51,7 +58,7 @@ class ProductServiceTest {
                 Currency,C-1,Description,Test,$29.99,4,0.4
                 Free,F-1,Description,Test,free,4,0.4
                 """;
-        when(products.existsBySkuIgnoreCase(any())).thenReturn(false);
+        when(products.findExistingSkus(any())).thenReturn(Set.of());
         ImportResult result = importService.importCsv(new MockMultipartFile("file", "items.csv", "text/csv", csv.getBytes()));
         assertEquals(1, result.imported());
         assertEquals(2, result.rejected());
@@ -81,11 +88,31 @@ class ProductServiceTest {
                 name,sku,description,category,price,stock,weight_kg
                 Existing,E-1,Description,Test,12.50,4,0.4
                 """;
-        when(products.existsBySkuIgnoreCase("E-1")).thenReturn(true);
+        when(products.findExistingSkus(any())).thenReturn(Set.of("e-1"));
         ImportResult result = importService.importCsv(new MockMultipartFile(
                 "file", "items.csv", "text/csv", csv.getBytes()));
         assertEquals(0, result.imported());
         assertEquals("SKU already exists", result.errors().getFirst().reason());
+    }
+
+    @Test
+    void importRejectsDuplicateSkusWithinCsvAndPersistsAcceptedRowsAsBatch() {
+        String csv = """
+                name,sku,description,category,price,stock,weight_kg
+                First,SKU-1,Description,Test,12.50,4,0.4
+                Duplicate,sku-1,Description,Test,14.50,4,0.4
+                Second,SKU-2,Description,Test,16.50,4,0.4
+                """;
+        when(products.findExistingSkus(any())).thenReturn(Set.of());
+
+        ImportResult result = importService.importCsv(new MockMultipartFile(
+                "file", "items.csv", "text/csv", csv.getBytes()));
+
+        assertEquals(2, result.imported());
+        assertEquals(1, result.rejected());
+        assertEquals("SKU already exists in CSV", result.errors().getFirst().reason());
+        verify(products).saveAll(any());
+        verify(products).findExistingSkus(Set.of("sku-1", "sku-2"));
     }
 
     @Test
@@ -130,11 +157,10 @@ class ProductServiceTest {
         when(products.findById(1L)).thenReturn(Optional.of(existing));
         Product updated = productService.update(1L, request);
         assertEquals("Name", updated.getName());
-        verify(products).save(existing);
-
-        when(products.existsById(1L)).thenReturn(true);
+        when(products.findById(1L)).thenReturn(Optional.of(existing));
         productService.delete(1L);
-        verify(products).deleteById(1L);
+        assertEquals(false, existing.isActive());
+        verify(products, times(2)).save(existing);
     }
 
     @Test
@@ -151,6 +177,11 @@ class ProductServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> productService.find(null, null, null, null,
                         PageRequest.of(0, 20, org.springframework.data.domain.Sort.by("description"))));
+
+        productService.find(null, null, null, null,
+                PageRequest.of(0, 20, org.springframework.data.domain.Sort.by("price").descending()));
+        productService.find(null, null, null, null,
+                PageRequest.of(0, 20, org.springframework.data.domain.Sort.by("name", "id")));
     }
 
     @Test
@@ -166,7 +197,6 @@ class ProductServiceTest {
         when(products.existsBySkuIgnoreCase("SKU")).thenReturn(true);
         assertThrows(ConflictException.class, () -> productService.create(request));
 
-        when(products.existsById(99L)).thenReturn(false);
         assertThrows(NotFoundException.class, () -> productService.delete(99L));
     }
 
@@ -186,6 +216,7 @@ class ProductServiceTest {
     void purchaseDecrementsStockAndPersistsOrder() {
         Product product = new Product("Item", "I-1", "Description", "Test", new BigDecimal("9.99"), 5, new BigDecimal("1.0"));
         when(products.findByIdForUpdate(1L)).thenReturn(java.util.Optional.of(product));
+        when(payments.authorize(new BigDecimal("19.98"))).thenReturn(PaymentResult.APPROVED);
         when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         orderService.purchase(new OrderRequest(1L, 2));
         assertEquals(3, product.getStock());
@@ -204,5 +235,30 @@ class ProductServiceTest {
     void purchaseRejectsUnknownProduct() {
         when(products.findByIdForUpdate(404L)).thenReturn(Optional.empty());
         assertThrows(NotFoundException.class, () -> orderService.purchase(new OrderRequest(404L, 1)));
+    }
+
+    @Test
+    void purchaseMarksDeclinedPaymentAsFailed() {
+        Product product = new Product("Item", "I-1", "Description", "Test", new BigDecimal("9.99"), 5, new BigDecimal("1.0"));
+        when(products.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
+        when(payments.authorize(any())).thenReturn(PaymentResult.DECLINED);
+        when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThrows(ConflictException.class, () -> orderService.purchase(new OrderRequest(1L, 2)));
+
+        org.mockito.ArgumentCaptor<com.example.ecommerce.order.Order> captor =
+                org.mockito.ArgumentCaptor.forClass(com.example.ecommerce.order.Order.class);
+        verify(orders).save(captor.capture());
+        assertEquals(OrderStatus.FAILED, captor.getValue().getStatus());
+        assertEquals(5, product.getStock());
+    }
+
+    @Test
+    void simulatedPaymentApprovesValidAmountsAndDeclinesInvalidAmounts() {
+        SimulatedPaymentService simulatedPayments = new SimulatedPaymentService();
+
+        assertEquals(PaymentResult.APPROVED, simulatedPayments.authorize(BigDecimal.ONE));
+        assertEquals(PaymentResult.DECLINED, simulatedPayments.authorize(null));
+        assertEquals(PaymentResult.DECLINED, simulatedPayments.authorize(BigDecimal.ONE.negate()));
     }
 }

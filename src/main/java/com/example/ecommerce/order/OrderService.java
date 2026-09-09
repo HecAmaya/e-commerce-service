@@ -12,10 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderService {
     private final ProductRepository products;
     private final OrderRepository orders;
+    private final PaymentService payments;
 
-    public OrderService(ProductRepository products, OrderRepository orders) {
+    public OrderService(ProductRepository products, OrderRepository orders, PaymentService payments) {
         this.products = products;
         this.orders = orders;
+        this.payments = payments;
     }
 
     @Transactional
@@ -25,11 +27,17 @@ public class OrderService {
         if (product.getStock() < request.quantity()) {
             throw new ConflictException("Insufficient stock for " + product.getSku());
         }
-        product.setStock(product.getStock() - request.quantity());
         BigDecimal total = product.getPrice().multiply(BigDecimal.valueOf(request.quantity()));
         Order order = new Order(total);
         order.addItem(new OrderItem(product.getId(), product.getSku(), product.getName(),
                 request.quantity(), product.getPrice()));
+        if (payments.authorize(total) != PaymentResult.APPROVED) {
+            order.setStatus(OrderStatus.FAILED);
+            orders.save(order);
+            throw new ConflictException("Payment was declined");
+        }
+        order.setStatus(OrderStatus.COMPLETED);
+        product.setStock(product.getStock() - request.quantity());
         products.save(product);
         return orders.save(order);
     }
