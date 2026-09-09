@@ -1,5 +1,8 @@
-package com.example.ecommerce.product;
+package com.example.ecommerce.product.services;
 
+import com.example.ecommerce.product.model.ImportResult;
+import com.example.ecommerce.product.model.Product;
+import com.example.ecommerce.product.model.ProductRepository;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;

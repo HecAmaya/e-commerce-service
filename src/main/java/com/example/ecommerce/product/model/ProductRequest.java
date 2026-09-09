@@ -1,4 +1,4 @@
-package com.example.ecommerce.product;
+package com.example.ecommerce.product.model;
 
 import com.example.ecommerce.common.NoHtml;
 import jakarta.validation.constraints.DecimalMin;

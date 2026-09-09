@@ -1,5 +1,7 @@
-package com.example.ecommerce.order;
+package com.example.ecommerce.order.services;
 
+import com.example.ecommerce.order.model.Order;
+import com.example.ecommerce.order.model.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

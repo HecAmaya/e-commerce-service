@@ -1,5 +1,8 @@
-package com.example.ecommerce.product;
+package com.example.ecommerce.product.services;
 
+import com.example.ecommerce.product.model.Product;
+import com.example.ecommerce.product.model.ProductRepository;
+import com.example.ecommerce.product.model.ProductRequest;
 import com.example.ecommerce.common.ConflictException;
 import com.example.ecommerce.common.NotFoundException;
 import java.math.BigDecimal;

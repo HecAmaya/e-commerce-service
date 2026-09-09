@@ -1,4 +1,4 @@
-package com.example.ecommerce.product;
+package com.example.ecommerce.product.services;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

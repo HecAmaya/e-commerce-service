@@ -13,6 +13,10 @@ Aplicación local de catálogo y compras simuladas. Permite administrar producto
 
 ## Enfoque y decisiones
 
+- Se conservaron los paquetes raíz existentes `order`, `product`, `common`, `config` y `resources`. Dentro de `order` y `product`, las clases se dividieron en `controller`, `services` y `model`; `common` y `config` continúan alojando los componentes compartidos.
+- Se conservaron los endpoints, nombres de tablas, migraciones, reglas de validación y flujo transaccional para que la reorganización no cambie el comportamiento observable.
+- La separación por capas se eligió sobre mantener paquetes por funcionalidad (`product` y `order`) porque el objetivo es hacer explícita la responsabilidad de cada clase y facilitar su descubrimiento en el proyecto.
+- Se consideró crear un paquete raíz adicional `repository`, pero se descartó para cumplir con la estructura solicitada de cuatro paquetes raíz; las interfaces Spring Data permanecen en `model` junto a las clases que persisten.
 - PostgreSQL se utiliza como base local porque las órdenes y el inventario requieren transacciones y relaciones.
 - Spring Data JPA centraliza la persistencia; `BigDecimal` evita errores de precisión en precios y pesos.
 - La compra es simulada y usa una transacción con bloqueo pesimista para evitar sobreventa.
@@ -76,9 +80,14 @@ Frontend de desarrollo: http://localhost:5173
 
 ## Estructura del proyecto
 
-- `src/main/java/com/example/ecommerce/product`: catálogo, búsqueda, importación CSV y validaciones de productos.
-- `src/main/java/com/example/ecommerce/order`: órdenes, inventario y servicio de pago simulado.
-- `src/main/java/com/example/ecommerce/common`: excepciones y validaciones reutilizables.
+- `src/main/java/com/example/ecommerce/order/controller`: endpoint de compras.
+- `src/main/java/com/example/ecommerce/order/services`: órdenes, inventario y pago simulado.
+- `src/main/java/com/example/ecommerce/order/model`: entidades, DTOs, enums y repositorio de órdenes.
+- `src/main/java/com/example/ecommerce/product/controller`: endpoints del catálogo e importación.
+- `src/main/java/com/example/ecommerce/product/services`: catálogo, importación CSV y parsing.
+- `src/main/java/com/example/ecommerce/product/model`: entidad, DTOs y repositorio de productos.
+- `src/main/java/com/example/ecommerce/common`: excepciones, validaciones y manejo común de errores HTTP.
+- `src/main/java/com/example/ecommerce/config`: configuración CORS compartida.
 - `src/main/resources/db/migration`: migraciones versionadas de Flyway.
 - `frontend/src/components`: componentes visuales de React.
 - `frontend/src/services`: acceso HTTP y contratos de la API del frontend.

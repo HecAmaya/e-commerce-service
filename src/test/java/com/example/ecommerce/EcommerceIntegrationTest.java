@@ -8,12 +8,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.ecommerce.order.Order;
-import com.example.ecommerce.order.OrderRepository;
-import com.example.ecommerce.order.OrderRequest;
-import com.example.ecommerce.order.OrderService;
-import com.example.ecommerce.product.Product;
-import com.example.ecommerce.product.ProductRepository;
+import com.example.ecommerce.order.model.Order;
+import com.example.ecommerce.order.model.OrderRepository;
+import com.example.ecommerce.order.model.OrderRequest;
+import com.example.ecommerce.order.services.OrderService;
+import com.example.ecommerce.product.model.Product;
+import com.example.ecommerce.product.model.ProductRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.Callable;

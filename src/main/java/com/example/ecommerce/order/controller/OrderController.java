@@ -1,5 +1,8 @@
-package com.example.ecommerce.order;
+package com.example.ecommerce.order.controller;
 
+import com.example.ecommerce.order.model.Order;
+import com.example.ecommerce.order.model.OrderRequest;
+import com.example.ecommerce.order.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;

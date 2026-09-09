@@ -1,5 +1,10 @@
-package com.example.ecommerce.product;
+package com.example.ecommerce.product.controller;
 
+import com.example.ecommerce.product.model.ImportResult;
+import com.example.ecommerce.product.model.Product;
+import com.example.ecommerce.product.model.ProductRequest;
+import com.example.ecommerce.product.services.ProductImportService;
+import com.example.ecommerce.product.services.ProductService;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import org.springframework.http.HttpStatus;

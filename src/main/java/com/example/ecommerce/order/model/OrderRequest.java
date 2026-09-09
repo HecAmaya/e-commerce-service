@@ -1,4 +1,4 @@
-package com.example.ecommerce.order;
+package com.example.ecommerce.order.model;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

@@ -1,4 +1,4 @@
-package com.example.ecommerce.order;
+package com.example.ecommerce.order.model;
 
 public enum PaymentResult {
     APPROVED,

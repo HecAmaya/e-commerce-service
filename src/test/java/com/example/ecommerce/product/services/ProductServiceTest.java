@@ -1,4 +1,4 @@
-package com.example.ecommerce.product;
+package com.example.ecommerce.product.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,16 +9,21 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
+import com.example.ecommerce.order.model.Order;
+import com.example.ecommerce.order.model.OrderRepository;
+import com.example.ecommerce.order.model.OrderRequest;
+import com.example.ecommerce.order.model.OrderStatus;
+import com.example.ecommerce.order.model.PaymentResult;
+import com.example.ecommerce.order.services.FailedOrderService;
+import com.example.ecommerce.order.services.OrderService;
+import com.example.ecommerce.order.services.PaymentService;
+import com.example.ecommerce.order.services.SimulatedPaymentService;
+import com.example.ecommerce.product.model.ImportResult;
+import com.example.ecommerce.product.model.Product;
+import com.example.ecommerce.product.model.ProductRepository;
+import com.example.ecommerce.product.model.ProductRequest;
 import com.example.ecommerce.common.ConflictException;
 import com.example.ecommerce.common.NotFoundException;
-import com.example.ecommerce.order.OrderRepository;
-import com.example.ecommerce.order.OrderRequest;
-import com.example.ecommerce.order.OrderService;
-import com.example.ecommerce.order.PaymentService;
-import com.example.ecommerce.order.PaymentResult;
-import com.example.ecommerce.order.SimulatedPaymentService;
-import com.example.ecommerce.order.OrderStatus;
-import com.example.ecommerce.order.FailedOrderService;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -269,8 +274,8 @@ class ProductServiceTest {
 
         assertThrows(ConflictException.class, () -> orderService.purchase(new OrderRequest(1L, 2)));
 
-        org.mockito.ArgumentCaptor<com.example.ecommerce.order.Order> captor =
-                org.mockito.ArgumentCaptor.forClass(com.example.ecommerce.order.Order.class);
+        org.mockito.ArgumentCaptor<Order> captor =
+                org.mockito.ArgumentCaptor.forClass(Order.class);
         verify(failedOrders).save(captor.capture());
         assertEquals(OrderStatus.FAILED, captor.getValue().getStatus());
         assertEquals(5, product.getStock());

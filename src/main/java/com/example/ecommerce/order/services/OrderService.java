@@ -1,9 +1,15 @@
-package com.example.ecommerce.order;
+package com.example.ecommerce.order.services;
 
+import com.example.ecommerce.order.model.Order;
+import com.example.ecommerce.order.model.OrderItem;
+import com.example.ecommerce.order.model.OrderRepository;
+import com.example.ecommerce.order.model.OrderRequest;
+import com.example.ecommerce.order.model.OrderStatus;
+import com.example.ecommerce.order.model.PaymentResult;
+import com.example.ecommerce.product.model.Product;
+import com.example.ecommerce.product.model.ProductRepository;
 import com.example.ecommerce.common.ConflictException;
 import com.example.ecommerce.common.NotFoundException;
-import com.example.ecommerce.product.Product;
-import com.example.ecommerce.product.ProductRepository;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

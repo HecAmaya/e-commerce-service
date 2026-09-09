@@ -1,4 +1,4 @@
-package com.example.ecommerce.product;
+package com.example.ecommerce.product.model;
 
 import java.util.Collection;
 import java.util.Set;
