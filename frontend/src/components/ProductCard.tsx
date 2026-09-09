@@ -4,7 +4,7 @@ type Props = {
   product: Product
   onEdit: (product: Product) => void
   onDelete: (id: number) => void
-  onPurchase: (id: number) => void
+  onPurchase: (product: Product) => void
 }
 
 export default function ProductCard({ product, onEdit, onDelete, onPurchase }: Props) {
@@ -15,7 +15,7 @@ export default function ProductCard({ product, onEdit, onDelete, onPurchase }: P
     <div className="actions">
       <button onClick={() => onEdit(product)}>Edit</button>
       <button onClick={() => onDelete(product.id)}>Delete</button>
-      <button className="primary" disabled={!product.stock} onClick={() => onPurchase(product.id)}>Purchase</button>
+      <button className="primary" disabled={!product.stock} onClick={() => onPurchase(product)}>Purchase</button>
     </div>
   </article>
 }

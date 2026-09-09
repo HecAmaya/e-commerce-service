@@ -40,12 +40,14 @@ public class ProductImportService {
         AtomicInteger imported = new AtomicInteger();
         parser.forEach(file, result -> {
             if (result.error() != null) {
-                errors.add(new ImportResult.RejectedRow(result.rowNumber(), result.sku(), result.error().getMessage()));
+                errors.add(new ImportResult.RejectedRow(result.rowNumber(), result.quantity(), result.sku(),
+                        result.name(), result.error().getMessage()));
                 return;
             }
             ProductCsvParser.ParsedRow row = result.row();
             if (!csvSkus.add(normalizeSku(row.sku()))) {
-                errors.add(new ImportResult.RejectedRow(result.rowNumber(), row.sku(), "SKU already exists in CSV"));
+                errors.add(new ImportResult.RejectedRow(result.rowNumber(), String.valueOf(row.stock()), row.sku(),
+                        row.name(), "SKU already exists in CSV"));
                 return;
             }
             candidates.add(new ImportCandidate(result.rowNumber(), row));
@@ -69,7 +71,8 @@ public class ProductImportService {
         for (ImportCandidate candidate : candidates) {
             ProductCsvParser.ParsedRow row = candidate.row();
             if (existingSkus.contains(normalizeSku(row.sku()))) {
-                errors.add(new ImportResult.RejectedRow(candidate.rowNumber(), row.sku(), "SKU already exists"));
+                errors.add(new ImportResult.RejectedRow(candidate.rowNumber(), String.valueOf(row.stock()), row.sku(),
+                        row.name(), "SKU already exists"));
                 continue;
             }
             batch.add(new Product(row.name(), row.sku(), row.description(), row.category(),

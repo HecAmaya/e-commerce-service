@@ -11,7 +11,7 @@ export type Product = {
 
 export type ProductForm = Omit<Product, 'id'>
 export type ProductPage = { content: Product[], totalElements: number, totalPages: number, number: number, size: number }
-export type ImportResponse = { imported: number, rejected: number, errors: { row: number, sku: string, reason: string }[] }
+export type ImportResponse = { imported: number, rejected: number, errors: { row: number, quantity: string, sku: string, name: string, reason: string }[] }
 export type OrderResponse = { id: number, total: number }
 
 export async function request<T>(url: string, options?: RequestInit): Promise<T> {

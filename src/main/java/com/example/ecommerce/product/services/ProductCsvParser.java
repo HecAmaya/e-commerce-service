@@ -31,10 +31,12 @@ public class ProductCsvParser {
             for (CSVRecord row : parser) {
                  int rowNumber = (int) row.getRecordNumber() + 1;
                  String sku = value(row, "sku");
+                 String name = value(row, "name");
+                 String quantity = value(row, "stock");
                  try {
                      consumer.accept(ParseResult.success(rowNumber, parseRow(row)));
                  } catch (RuntimeException ex) {
-                     consumer.accept(ParseResult.failure(rowNumber, sku, ex));
+                     consumer.accept(ParseResult.failure(rowNumber, quantity, sku, name, ex));
                  }
             }
         } catch (IOException ex) {
@@ -95,13 +97,15 @@ public class ProductCsvParser {
                             BigDecimal price, int stock, BigDecimal weightKg) {
     }
 
-    public record ParseResult(int rowNumber, String sku, ParsedRow row, RuntimeException error) {
+    public record ParseResult(int rowNumber, String quantity, String sku, String name,
+                              ParsedRow row, RuntimeException error) {
         static ParseResult success(int rowNumber, ParsedRow row) {
-            return new ParseResult(rowNumber, row.sku(), row, null);
+            return new ParseResult(rowNumber, String.valueOf(row.stock()), row.sku(), row.name(), row, null);
         }
 
-        static ParseResult failure(int rowNumber, String sku, RuntimeException error) {
-            return new ParseResult(rowNumber, sku, null, error);
+        static ParseResult failure(int rowNumber, String quantity, String sku, String name,
+                RuntimeException error) {
+            return new ParseResult(rowNumber, quantity, sku, name, null, error);
         }
     }
 }
