@@ -134,6 +134,7 @@ curl -X POST http://localhost:8080/api/orders ^
 La compra usa una transacción y bloqueo pesimista para evitar vender más unidades que las disponibles. La respuesta incluye el total, el estado (`PENDING`, `COMPLETED` o `FAILED`) y el detalle de la orden. El pago está aislado detrás de un servicio simulado. La falta de inventario o un pago rechazado devuelve `409 Conflict`.
 
 El esquema se gestiona con migraciones Flyway en `src/main/resources/db/migration`; Hibernate valida el esquema en lugar de modificarlo automáticamente.
+En una base local nueva, Flyway crea y aplica las migraciones automáticamente al iniciar el backend. No se debe borrar ni editar una migración ya aplicada; los cambios futuros deben agregarse como una nueva migración versionada.
 
 ## Pruebas
 
